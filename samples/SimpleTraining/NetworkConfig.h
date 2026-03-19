@@ -11,7 +11,7 @@
 #pragma once
 
 #define INPUT_FEATURES 2
-#define INPUT_NEURONS (INPUT_FEATURES * 6) // Frequency encoding increases the input by 6 for each input
+#define INPUT_NEURONS (INPUT_FEATURES * 6) // = 12: Frequency encoding increases the input by 6 for each input
 #define OUTPUT_NEURONS 3
 
 #define HIDDEN_NEURONS 64
@@ -23,8 +23,8 @@
 #define FLAT_LEARNING_STEPS 200000
 #define DECAY_LEARNING_STEPS 200000
 
-#define NUM_TRANSITIONS (NUM_HIDDEN_LAYERS + 1)
-#define NUM_TRANSITIONS_ALIGN4 ((NUM_TRANSITIONS + 3) / 4)
+#define NUM_TRANSITIONS (NUM_HIDDEN_LAYERS + 1)                 // = 5
+#define NUM_TRANSITIONS_ALIGN4 ((NUM_TRANSITIONS + 3) / 4)      // = 2
 #define LOSS_SCALE 1024.0
 #define RELU_LEAK 0.01h
 

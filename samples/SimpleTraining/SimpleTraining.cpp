@@ -471,7 +471,7 @@ public:
         for (int i = 0; i < NUM_TRANSITIONS; ++i)
         {
             neuralConstants.weightOffsets[i / 4][i % 4] = m_deviceNetworkLayout.networkLayers[i].weightOffset;
-            neuralConstants.biasOffsets[i / 4][i % 4] = m_deviceNetworkLayout.networkLayers[i].biasOffset;
+            neuralConstants.biasOffsets  [i / 4][i % 4] = m_deviceNetworkLayout.networkLayers[i].biasOffset;
         }
 
         neuralConstants.imageWidth = m_inferenceTexture->getDesc().width;
