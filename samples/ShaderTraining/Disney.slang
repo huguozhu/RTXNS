@@ -8,10 +8,18 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
+/*
+特点总结
+    1. 分层材质: 基础层(漫反射+镜面反射) + 清漆层
+    2. 能量守恒: 所有分布函数都经过归一化
+    3. 性能优化: 使用近似公式而非完整物理积分
+    4. Disney原则: 遵循"艺术导向"的参数化设计
+ */
 //----------- Core part of the shader
 
 const static float PI = 3.14159265358979323846;
 
+// 实现Schlick近似Fresnel方程，用于计算不同入射角下的反射率
 float SchlickFresnel(float u)
 {
     float m = clamp(1 - u, 0, 1);
@@ -19,6 +27,10 @@ float SchlickFresnel(float u)
     return m2 * m2 * m; // pow(m,5)
 }
 
+// GTR1 (Gtr1) - 用于清漆层：
+//  各向同性的GGX分布变体
+//  当粗糙度接近1时返回均匀分布(1 / π)
+//  使用对数函数确保能量守恒
 float Gtr1(float NdotH, float a)
 {
     if (a >= 1)
@@ -30,12 +42,16 @@ float Gtr1(float NdotH, float a)
     return (a2 - 1) / (PI * log(a2) * t);
 }
 
+// GTR2 (Gtr2) - 用于基础层：
+//  标准的GGX / Trowbridge - Reitz分布
+//  处理各向同性粗糙度
 float Gtr2(float NdotH, float ax)
 {
     float a = ax * (1 / ax / ax * (1 - NdotH * NdotH) + NdotH * NdotH);
     return 1 / (PI * a * a);
 }
 
+// SmithGGX - 各向同性版本：标准的Smith几何遮蔽项
 float SmithGGX(float NdotV, float alphaG)
 {
     float a = alphaG * alphaG;
@@ -43,6 +59,7 @@ float SmithGGX(float NdotV, float alphaG)
     return 1 / (NdotV + sqrt(a + b - a * b));
 }
 
+// 各向异性版本:处理各向异性粗糙度
 float SmithGGXAnisotropy(float NdotV, float ax)
 {
     return 1 / (NdotV + sqrt(ax * ax * (1 - NdotV * NdotV) + NdotV * NdotV));

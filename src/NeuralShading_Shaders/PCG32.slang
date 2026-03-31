@@ -31,7 +31,8 @@
  */
 
 #pragma once
-
+// PCG (Permuted Congruential Generator) 随机数生成器的实现，
+// 专为GPU着色器设计的高质量、高性能RNG
 struct PCG32
 {
     uint64_t state, inc;

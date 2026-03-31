@@ -15,8 +15,8 @@ public static const uint LOSS_ACCUM_MAX_COMPONENTS = 128;
  // Configuration 
  public struct LossConfig
  {
-    uint componentCount;
-    uint baseByteOffset;
+    uint componentCount;        // Êµ¼ÊÊ¹ÓÃµÄ·ÖÁ¿Êı
+    uint baseByteOffset;        // »º³åÇøÆğÊ¼Æ«ÒÆ
 
     public uint GetComponentCount()
     { 
@@ -52,7 +52,7 @@ float AtomicAddFloat(RWByteAddressBuffer buffer, uint byteOffset, float valueToA
 
         if (original == expected)
         {
-            // Success — return the previous value
+            // Success ?return the previous value
             return oldVal;
         }
 
@@ -61,6 +61,8 @@ float AtomicAddFloat(RWByteAddressBuffer buffer, uint byteOffset, float valueToA
     }
 }
 
+// NVIDIA GPU£ºÊ¹ÓÃÓ²¼şInterlockedAddF32£¨Í¨¹ıNVAPI£©
+// ÆäËûÆ½Ì¨/DXIL£ºÊ¹ÓÃCASÑ­»·ÊµÏÖÈí¼şÔ­×Ó²Ù×÷
 public float AtomicAddF32Portable(
     RWByteAddressBuffer buffer,
     uint byteOffset,

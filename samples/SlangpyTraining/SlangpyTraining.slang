@@ -11,7 +11,27 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
- import slangpy;
+/*
+ 系统架构概览
+    这是一个端到端的神经纹理训练系统，包含：
+        1. 可训练神经网络模型
+        2. 自动微分引擎
+        3. Adam优化器实现
+        4. 实时训练循环
+ */
+
+ /*
+ 训练流程详解-单步训练：
+    1. 随机生成UV → RNG
+    2. 采样目标颜色 → targetTex[uv]
+    3. 网络前向 → predictedRGB
+    4. 损失计算 → loss = L(target, predicted)
+    5. 梯度计算 → ∇loss (自动微分)
+    6. 反向传播 → ∇weights (bwd_diff)
+    7. 优化器更新 → weights = Adam(∇weights)
+    8. 梯度清零 → grad = 0
+ */
+import slangpy;
 
 __exported import NeuralModules;
 __exported import Loss;
@@ -20,6 +40,7 @@ __exported import Optimizers;
 #define ADAM_BETA1                               0.9f
 #define ADAM_BETA2                               0.999f
 #define ADAM_EPSILON                             1E-8f
+
 
 struct RWNDBufferAccessor : optimizers::IBufferAccessor
 {
@@ -58,6 +79,13 @@ struct RNG
 
 // An example of adding a custom activation to your network
 // This implements the Sigmoid Linear Unit (SiLU)
+/*
+自定义激活函数:
+SiLU (Sigmoid Linear Unit)：
+    1. 公式：x * sigmoid(x) = x / (1 + e^(-x))
+    2. 平滑、非单调，在深度学习中表现优异
+    3. 优于ReLU的特性
+*/
 struct SiLUActivation<T : __BuiltinFloatingPointType, let K : int> : rtxns::mlp::IActivation<T, K>
 {
     [Differentiable]
@@ -77,12 +105,18 @@ T SampleTexture<T : ITexelElement>(Texture2D<T> tex, float2 uv)
 }
 
 // Take one step with the adam optimizer
+/*
+优化器实现的特征:
+    1. 混合精度训练：FP32累积更新 + FP16计算梯度
+    2. Adam优化器：自适应学习率（β1=0.9, β2=0.999, ε=1e-8）
+    3. 梯度清零：更新后自动清零
+*/
 void OptimizerStep(
-    RWNDBuffer<float, 1> moments1,
-    RWNDBuffer<float, 1> moments2,
-    RWNDBuffer<float, 1> paramF,
-    RWNDBuffer<half, 1> paramH,
-    RWNDBuffer<half, 1> grad,
+    RWNDBuffer<float, 1> moments1,      // Adam一阶矩
+    RWNDBuffer<float, 1> moments2,      // Adam二阶矩
+    RWNDBuffer<float, 1> paramF,        // FP32参数（主）
+    RWNDBuffer<half, 1> paramH,         // FP16参数（计算）
+    RWNDBuffer<half, 1> grad,           // 梯度
     uint idx,
     float learningRate,
     float gradScale,
@@ -104,6 +138,14 @@ void OptimizerStep(
     grad[idx] = 0.0h;
 }
 
+/*
+训练流程(TrainTexture)：
+    1. 随机采样UV坐标
+    2. 采样目标纹理颜色
+    3. 网络前向传播预测颜色
+    4. 计算损失梯度
+    5. 反向传播更新权重
+*/
 void TrainTexture<Model : rtxns::IModule<half, 2, 3>, Loss : rtxns::mlp::ILoss<float, 3>>(Model model, inout RNG rng, Texture2D<float4> targetTex, float lossScale)
 {
     // Get a random uv coordinate for the input
@@ -125,6 +167,12 @@ void TrainTexture<Model : rtxns::IModule<half, 2, 3>, Loss : rtxns::mlp::ILoss<f
 
 // Convenience functions for evaluating the model from vector inputs
 // Converts to/from CoopVec internally
+/*
+自动微分系统:
+    1. [Differentiable]属性标记可微函数
+    2. bwd_diff自动生成反向传播代码
+    3. no_diff标记非微分参数
+*/
 [Differentiable]
 float3 EvalModel<Model: rtxns::IModule<half, 2, 3>>(Model model, no_diff float2 inputUV)
 {

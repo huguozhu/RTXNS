@@ -7,7 +7,7 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
-
+// Adam优化器实现的Slang代码，专为GPU上的神经网络训练设计
 #define ADAM_BETA1                               0.9f
 #define ADAM_BETA2                               0.999f
 #define ADAM_EPSILON                             1E-8f
@@ -66,6 +66,15 @@ namespace optimizers
         float m_epsilon;
 
         // Initializes from two moments buffers and optimizations parameters
+        /*
+        参数说明：
+            1. moments1：一阶矩缓冲区（均值）
+            2. moments2：二阶矩缓冲区（方差）
+            3. learningRate：学习率
+            4. lossScale：损失缩放因子（用于混合精度训练）
+            5. beta1, beta2：指数衰减率（默认0.9, 0.999）
+            6. epsilon：数值稳定性项（默认1e-8）
+        */
         __init(
             T moments1, 
             T moments2,
